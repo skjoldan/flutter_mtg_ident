@@ -14,6 +14,7 @@ class _CameraScreenState extends State<CameraScreen> {
   late CameraService _cameraService;
   late TensorFlowLight _tensorflowLight;
   bool isProcessing = false;
+  String identifiedCard = '';
 
   @override
   void initState() {
@@ -47,6 +48,11 @@ class _CameraScreenState extends State<CameraScreen> {
             aspectRatio: _cameraService.controller!.value.aspectRatio,
             child: CameraPreview(_cameraService.controller!),
           ),
+          if (identifiedCard.isNotEmpty)
+            Positioned(
+              bottom: 0,
+              child: Text('Identified card: $identifiedCard'),
+            ),
           const CircularProgressIndicator()
         ],
       );
@@ -71,6 +77,10 @@ class _CameraScreenState extends State<CameraScreen> {
     });
     List<dynamic> predictions = await _tensorflowLight.predict(image);
     print(predictions);
+    if (predictions.isNotEmpty) {
+      identifiedCard = predictions[
+          0]; // assuming the card name is the first element in the predictions list
+    }
     setState(() {
       isProcessing = false;
     });
