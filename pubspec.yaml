@@ -38,6 +38,7 @@ dependencies:
   camera: ^0.10.5+2
   tflite_flutter: ^0.10.1
   tflite: any
+  image: any
 
 dev_dependencies:
   flutter_test:

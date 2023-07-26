@@ -29,11 +29,35 @@ class _CameraScreenState extends State<CameraScreen> {
       await _cameraService.getCameras();
       await _cameraService.initCamera();
       await _tensorflowLight.loadModel('path/to/model.tflite');
-      _cameraService.controller!.startImageStream(_onImageCaptured);
+      _cameraService.controller!.startImageStream((image) async {
+        if (image != null && !isProcessing) {
+          setState(() {
+            isProcessing = true;
+          });
+
+          // Pass the image to the model
+          List<dynamic> predictions = await _tensorflowLight.predict(image);
+          print(predictions);
+          if (predictions.isNotEmpty) {
+            identifiedCard = predictions[
+                0]; // assuming the card name is the first element in the predictions list
+          }
+          setState(() {
+            isProcessing = false;
+          });
+        }
+      });
     } catch (e) {
       print(e);
     }
     setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _cameraService.dispose();
+    _tensorflowLight.dispose();
+    super.dispose();
   }
 
   @override
@@ -48,41 +72,37 @@ class _CameraScreenState extends State<CameraScreen> {
             aspectRatio: _cameraService.controller!.value.aspectRatio,
             child: CameraPreview(_cameraService.controller!),
           ),
+          const CircularProgressIndicator()
+        ],
+      );
+    } else {
+      return Stack(
+        children: <Widget>[
+          AspectRatio(
+            aspectRatio: _cameraService.controller!.value.aspectRatio,
+            child: CameraPreview(_cameraService.controller!),
+          ),
+          Positioned(
+            left: 50, // adjust as needed
+            top: 50, // adjust as needed
+            child: Container(
+              width: 200, // adjust as needed
+              height: 300, // adjust as needed
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.red, // color of the box
+                  width: 3, // width of the box border
+                ),
+              ),
+            ),
+          ),
           if (identifiedCard.isNotEmpty)
             Positioned(
               bottom: 0,
               child: Text('Identified card: $identifiedCard'),
             ),
-          const CircularProgressIndicator()
         ],
       );
-    } else {
-      return AspectRatio(
-        aspectRatio: _cameraService.controller!.value.aspectRatio,
-        child: CameraPreview(_cameraService.controller!),
-      );
     }
-  }
-
-  @override
-  void dispose() {
-    _cameraService.dispose();
-    _tensorflowLight.dispose();
-    super.dispose();
-  }
-
-  void _onImageCaptured(CameraImage image) async {
-    setState(() {
-      isProcessing = true;
-    });
-    List<dynamic> predictions = await _tensorflowLight.predict(image);
-    print(predictions);
-    if (predictions.isNotEmpty) {
-      identifiedCard = predictions[
-          0]; // assuming the card name is the first element in the predictions list
-    }
-    setState(() {
-      isProcessing = false;
-    });
   }
 }
