@@ -30,7 +30,7 @@ class _CameraScreenState extends State<CameraScreen> {
       await _cameraService.initCamera();
       await _tensorflowLight.loadModel('path/to/model.tflite');
       _cameraService.controller!.startImageStream((image) async {
-        if (image != null && !isProcessing) {
+        if (!isProcessing) {
           setState(() {
             isProcessing = true;
           });
